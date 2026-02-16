@@ -206,6 +206,18 @@
     animation-delay: 4s;
   }
   
+  /* Ripple animation for buttons */
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  
   /* Sidebar item styles */
   .sidebar-item {
     transition: all 0.2s;
@@ -222,5 +234,74 @@
     border-right-width: 3px;
     border-right-style: solid;
     border-right-color: #4f46e5;
+  }
+
+  /* Modern Select Option Styling */
+  select {
+    /* Ensure consistent appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Style option elements */
+  select option {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #1e293b;
+    background-color: #ffffff;
+    border: none;
+    transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  }
+
+  /* Hover state for options (works in some browsers) */
+  select option:hover {
+    background-color: #f1f5f9;
+    color: #3b82f6;
+  }
+
+  /* Selected option styling */
+  select option:checked {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 500;
+  }
+
+  /* Disabled option styling */
+  select option:disabled {
+    color: #94a3b8;
+    background-color: #f8fafc;
+    cursor: not-allowed;
+  }
+
+  /* Focus state for select */
+  select:focus option:checked {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  /* Modern dropdown styling (for browsers that support it) */
+  select::-ms-expand {
+    display: none; /* Hide default arrow in IE */
+  }
+
+  /* Custom scrollbar for select dropdown (WebKit browsers) */
+  select::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  select::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+
+  select::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+    border-radius: 4px;
+  }
+
+  select::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
   }
 }

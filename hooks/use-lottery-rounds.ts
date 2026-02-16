@@ -29,6 +29,14 @@ interface UseLotteryRoundsParams {
   filterStatus?: string[];
 }
 
+interface UpdateLotteryRoundDto {
+  lotteryTypeId?: string;
+  roundNumber?: string;
+  openTime?: string;
+  closeTime?: string;
+  status?: string;
+}
+
 interface UseLotteryRoundsReturn {
   rounds: LotteryRound[];
   loading: boolean;
@@ -41,6 +49,8 @@ interface UseLotteryRoundsReturn {
     openTime: string;
     closeTime: string;
   }) => Promise<void>;
+  updateRound: (id: string, data: UpdateLotteryRoundDto) => Promise<void>;
+  deleteRound: (id: string) => Promise<void>;
   setPage: (page: number) => void;
 }
 
@@ -143,6 +153,28 @@ export function useLotteryRounds(params: UseLotteryRoundsParams = {}): UseLotter
     }
   };
 
+  const updateRound = async (id: string, data: UpdateLotteryRoundDto) => {
+    try {
+      await api.put(`/lottery/admin/rounds/${id}`, data);
+      await fetchRounds();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to update lottery round");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const deleteRound = async (id: string) => {
+    try {
+      await api.delete(`/lottery/admin/rounds/${id}`);
+      await fetchRounds();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to delete lottery round");
+      setError(error);
+      throw error;
+    }
+  };
+
   const setPage = (page: number) => {
     setPagination((prev) => ({ ...prev, page }));
   };
@@ -158,6 +190,8 @@ export function useLotteryRounds(params: UseLotteryRoundsParams = {}): UseLotter
     pagination,
     refetch: fetchRounds,
     createRound,
+    updateRound,
+    deleteRound,
     setPage,
   };
 }

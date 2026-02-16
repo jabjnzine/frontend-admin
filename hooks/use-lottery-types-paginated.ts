@@ -3,11 +3,23 @@
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 
+export interface PayoutRates {
+  two_digit?: number;
+  three_digit?: number;
+  running?: number;
+  set?: number;
+  high_low?: number;
+  todd?: number;
+  odd_even?: number;
+  rood?: number;
+}
+
 export interface LotteryType {
   id: string;
   name: string;
   code: string;
   status: string;
+  payoutRates?: PayoutRates;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -24,6 +36,20 @@ interface UseLotteryTypesPaginatedParams {
   limit?: number;
 }
 
+interface CreateLotteryTypeDto {
+  name: string;
+  code: string;
+  status?: string;
+  payoutRates?: PayoutRates;
+}
+
+interface UpdateLotteryTypeDto {
+  name?: string;
+  code?: string;
+  status?: string;
+  payoutRates?: PayoutRates;
+}
+
 interface UseLotteryTypesPaginatedReturn {
   types: LotteryType[];
   loading: boolean;
@@ -31,6 +57,9 @@ interface UseLotteryTypesPaginatedReturn {
   pagination: PaginationMeta;
   refetch: () => Promise<void>;
   setPage: (page: number) => void;
+  createType: (data: CreateLotteryTypeDto) => Promise<void>;
+  updateType: (id: string, data: UpdateLotteryTypeDto) => Promise<void>;
+  deleteType: (id: string) => Promise<void>;
 }
 
 export function useLotteryTypesPaginated(params: UseLotteryTypesPaginatedParams = {}): UseLotteryTypesPaginatedReturn {
@@ -48,7 +77,7 @@ export function useLotteryTypesPaginated(params: UseLotteryTypesPaginatedParams 
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get("/lottery/types", {
+      const response = await api.get("/lottery/admin/types", {
         params: {
           page: pagination.page,
           limit: pagination.limit,
@@ -126,6 +155,21 @@ export function useLotteryTypesPaginated(params: UseLotteryTypesPaginatedParams 
     fetchTypes();
   }, [pagination.page]);
 
+  const createType = async (data: CreateLotteryTypeDto) => {
+    await api.post("/lottery/admin/types", data);
+    await fetchTypes();
+  };
+
+  const updateType = async (id: string, data: UpdateLotteryTypeDto) => {
+    await api.put(`/lottery/admin/types/${id}`, data);
+    await fetchTypes();
+  };
+
+  const deleteType = async (id: string) => {
+    await api.delete(`/lottery/admin/types/${id}`);
+    await fetchTypes();
+  };
+
   return {
     types,
     loading,
@@ -133,5 +177,8 @@ export function useLotteryTypesPaginated(params: UseLotteryTypesPaginatedParams 
     pagination,
     refetch: fetchTypes,
     setPage,
+    createType,
+    updateType,
+    deleteType,
   };
 }

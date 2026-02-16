@@ -19,7 +19,11 @@ interface UseLotteryResultsReturn {
     firstPrize?: string;
     lastTwoDigits?: string;
     lastThreeDigits?: string;
-  }) => Promise<void>;
+  }) => Promise<{
+    won: number;
+    lost: number;
+    totalPayout: number;
+  } | undefined>;
   setPage: (page: number) => void;
 }
 
@@ -114,7 +118,7 @@ export function useLotteryResults(params: UseLotteryResultsParams = {}): UseLott
     }
   ) => {
     try {
-      await api.put(`/lottery/admin/rounds/${roundId}/result`, {
+      const response = await api.put(`/lottery/admin/rounds/${roundId}/result`, {
         result: {
           firstPrize: result.firstPrize || undefined,
           lastTwoDigits: result.lastTwoDigits || undefined,
@@ -122,6 +126,8 @@ export function useLotteryResults(params: UseLotteryResultsParams = {}): UseLott
         },
       });
       await fetchRounds();
+      // ส่งคืนผลการคำนวณถ้ามี
+      return response.data?.calculationResult;
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Failed to submit lottery result");
       setError(error);

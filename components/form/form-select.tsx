@@ -9,30 +9,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-radix";
 import { cn } from "@/lib/utils";
 
-interface FormInputProps {
+interface FormSelectProps {
   control: Control<any>;
   name: string;
   label?: string;
   placeholder?: string;
-  type?: string;
   description?: string;
-  icon?: React.ReactNode;
+  options: Array<{ value: string; label: string }>;
   className?: string;
 }
 
-export function FormInput({
+export function FormSelect({
   control,
   name,
   label,
   placeholder,
-  type = "text",
   description,
-  icon,
+  options,
   className,
-}: FormInputProps) {
+}: FormSelectProps) {
   return (
     <FormField
       control={control}
@@ -46,37 +50,22 @@ export function FormInput({
           )}
           <FormControl>
             <div className="relative group">
-              {icon && (
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 transition-colors duration-200 group-focus-within:text-blue-500 pointer-events-none">
-                  {icon}
-                </div>
-              )}
-              <Input
-                type={type}
-                placeholder={placeholder}
-                className={cn(
-                  icon && "pl-11"
-                )}
-                {...field}
-                value={
-                  type === 'number'
-                    ? (field.value !== undefined && field.value !== null && !isNaN(Number(field.value)) ? String(field.value) : '')
-                    : (field.value ?? '')
-                }
-                onChange={(e) => {
-                  if (type === 'number') {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      field.onChange(undefined);
-                      return;
-                    }
-                    const value = parseFloat(raw);
-                    field.onChange(isNaN(value) ? undefined : value);
-                  } else {
-                    field.onChange(e.target.value);
-                  }
-                }}
-              />
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={field.disabled}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={placeholder || "เลือก..."} />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {/* Focus indicator line */}
               <div 
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-b-lg opacity-0 scale-x-0 transition-[opacity,transform] duration-200 ease-out group-focus-within:opacity-100 group-focus-within:scale-x-100 motion-reduce:transition-none pointer-events-none"

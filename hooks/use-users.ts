@@ -9,6 +9,17 @@ export interface User {
   role: string;
   status: string;
   createdAt: string;
+  wallet?: {
+    id: string;
+    balance: number;
+  };
+  stats?: {
+    totalBets: number;
+    totalBetAmount: number;
+    totalTransactions: number;
+    totalDeposits: number;
+    totalWithdraws: number;
+  };
 }
 
 export interface PaginationMeta {
@@ -21,6 +32,54 @@ export interface PaginationMeta {
 interface UseUsersParams {
   page?: number;
   limit?: number;
+  role?: string;
+  status?: string;
+  search?: string;
+}
+
+interface CreateUserDto {
+  username: string;
+  password: string;
+  role?: string;
+  status?: string;
+}
+
+interface UpdateUserDto {
+  username?: string;
+  password?: string;
+  role?: string;
+  status?: string;
+}
+
+export interface Bet {
+  id: string;
+  userId: string;
+  lotteryRoundId: string;
+  betType: string;
+  numbers: string[];
+  amount: number;
+  status: string;
+  payout: number | null;
+  createdAt: string;
+  lotteryRound?: {
+    id: string;
+    roundNumber: string;
+    lotteryType?: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
+export interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  description: string | null;
+  walletId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UseUsersReturn {
@@ -29,7 +88,14 @@ interface UseUsersReturn {
   error: Error | null;
   pagination: PaginationMeta;
   refetch: () => Promise<void>;
+  createUser: (data: CreateUserDto) => Promise<User>;
+  updateUser: (userId: string, data: UpdateUserDto) => Promise<User>;
+  getUser: (userId: string) => Promise<User>;
   deactivateUser: (userId: string) => Promise<void>;
+  activateUser: (userId: string) => Promise<void>;
+  getUserBets: (userId: string) => Promise<Bet[]>;
+  getUserTransactions: (userId: string) => Promise<Transaction[]>;
+  updateWalletBalance: (userId: string, balance: number, description?: string) => Promise<void>;
   setPage: (page: number) => void;
 }
 
@@ -44,15 +110,39 @@ export function useUsers(params: UseUsersParams = {}): UseUsersReturn {
     totalPages: 0,
   });
 
+  // Sync pagination state with params when they change
+  useEffect(() => {
+    if (params.page && params.page !== pagination.page) {
+      setPagination((prev) => ({ ...prev, page: params.page! }));
+    }
+    if (params.limit && params.limit !== pagination.limit) {
+      setPagination((prev) => ({ ...prev, limit: params.limit! }));
+    }
+  }, [params.page, params.limit]);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      const queryParams: any = {
+        page: pagination.page,
+        limit: pagination.limit,
+      };
+
+      // Add filters if provided
+      if (params.role && params.role !== "all") {
+        queryParams.role = params.role;
+      }
+      if (params.status && params.status !== "all") {
+        queryParams.status = params.status;
+      }
+      if (params.search) {
+        queryParams.search = params.search;
+      }
+
       const response = await api.get("/admin/users", {
-        params: {
-          page: pagination.page,
-          limit: pagination.limit,
-        },
+        params: queryParams,
       });
 
       // Handle nested response structure: { data: { data: [...], meta: {...} } }
@@ -114,6 +204,41 @@ export function useUsers(params: UseUsersParams = {}): UseUsersReturn {
     }
   };
 
+  const createUser = async (data: CreateUserDto): Promise<User> => {
+    try {
+      const response = await api.post("/admin/users", data);
+      await fetchUsers();
+      return response.data.data || response.data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to create user");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const updateUser = async (userId: string, data: UpdateUserDto): Promise<User> => {
+    try {
+      const response = await api.put(`/admin/users/${userId}`, data);
+      await fetchUsers();
+      return response.data.data || response.data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to update user");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const getUser = async (userId: string): Promise<User> => {
+    try {
+      const response = await api.get(`/admin/users/${userId}`);
+      return response.data.data || response.data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to get user");
+      setError(error);
+      throw error;
+    }
+  };
+
   const deactivateUser = async (userId: string) => {
     try {
       await api.put(`/admin/users/${userId}/deactivate`);
@@ -125,13 +250,60 @@ export function useUsers(params: UseUsersParams = {}): UseUsersReturn {
     }
   };
 
+  const activateUser = async (userId: string) => {
+    try {
+      await api.put(`/admin/users/${userId}/activate`);
+      await fetchUsers();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to activate user");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const getUserBets = async (userId: string): Promise<Bet[]> => {
+    try {
+      const response = await api.get(`/admin/users/${userId}/bets`);
+      return response.data.data || response.data || [];
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to get user bets");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const getUserTransactions = async (userId: string): Promise<Transaction[]> => {
+    try {
+      const response = await api.get(`/admin/users/${userId}/transactions`);
+      return response.data.data || response.data || [];
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to get user transactions");
+      setError(error);
+      throw error;
+    }
+  };
+
+  const updateWalletBalance = async (userId: string, balance: number, description?: string): Promise<void> => {
+    try {
+      await api.put(`/admin/users/${userId}/wallet/balance`, {
+        balance,
+        description,
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to update wallet balance");
+      setError(error);
+      throw error;
+    }
+  };
+
   const setPage = (page: number) => {
     setPagination((prev) => ({ ...prev, page }));
   };
 
   useEffect(() => {
     fetchUsers();
-  }, [pagination.page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, params.role, params.status, params.search]);
 
   return {
     users,
@@ -139,7 +311,14 @@ export function useUsers(params: UseUsersParams = {}): UseUsersReturn {
     error,
     pagination,
     refetch: fetchUsers,
+    createUser,
+    updateUser,
+    getUser,
     deactivateUser,
+    activateUser,
+    getUserBets,
+    getUserTransactions,
+    updateWalletBalance,
     setPage,
   };
 }

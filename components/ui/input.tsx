@@ -10,7 +10,28 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 file:border-0 file:bg-transparent file:text-sm file:font-medium",
+          // Base styles
+          "flex h-11 w-full rounded-lg border border-slate-200",
+          "bg-white px-4 py-2.5 text-sm text-slate-900",
+          "placeholder:text-slate-400",
+          // Shadow and depth
+          "shadow-sm",
+          // Transitions - explicit properties only (not "all")
+          "transition-[border-color,box-shadow,background-color] duration-200 ease-out",
+          // Hover state
+          "hover:border-slate-300 hover:shadow-md",
+          // Focus state - visible focus ring
+          "focus-visible:outline-none",
+          "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+          "focus-visible:border-blue-500",
+          "focus-visible:shadow-md focus-visible:shadow-blue-500/10",
+          // Disabled state
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          "disabled:bg-slate-50 disabled:border-slate-200",
+          // File input specific
+          "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+          // Reduced motion support
+          "motion-reduce:transition-none",
           className
         )}
         ref={ref}

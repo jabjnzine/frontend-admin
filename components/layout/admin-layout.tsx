@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { title: "ประเภทหวย", href: "/lottery-types", icon: Ticket },
   { title: "รอบหวย", href: "/lottery-rounds", icon: Calendar },
   { title: "กรอกผลรางวัล", href: "/results", icon: Award },
+  { title: "จัดการการแทง", href: "/bets", icon: Target },
   { title: "การเงิน", href: "/transactions", icon: Wallet },
   { title: "รายงาน", href: "/reports", icon: BarChart3 },
 ];

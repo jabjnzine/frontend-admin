@@ -143,7 +143,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-sm text-slate-500 mt-6">
-          © 2024 ระบบจัดการหวยออนไลน์. สงวนลิขสิทธิ์.
+          © {new Date().getFullYear()} ระบบจัดการหวยออนไลน์. สงวนลิขสิทธิ์.
         </p>
       </div>
     </div>

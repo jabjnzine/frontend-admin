@@ -17,13 +17,21 @@ import {
 import { Pagination } from "@/components/ui/pagination";
 import { Form } from "@/components/ui/form";
 import { FormInput } from "@/components/form/form-input";
-import { ArrowLeft, Search } from "lucide-react";
+import { Search, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSortHeader, useTableSort } from "@/components/ui/table-sort";
 import { DataTable, Column } from "@/components/ui/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useLotteryTypes } from "@/hooks/use-lottery-types";
 import { useLotteryResults } from "@/hooks/use-lottery-results";
 import { LotteryRound } from "@/hooks/use-lottery-rounds";
@@ -38,6 +46,16 @@ export default function ResultsPage() {
   const { rounds, loading, pagination, refetch, submitResult, setPage } = useLotteryResults();
   const [selectedRound, setSelectedRound] = useState<LotteryRound | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculationResult, setCalculationResult] = useState<{
+    won: number;
+    lost: number;
+    totalPayout: number;
+  } | null>(null);
 
   const form = useForm({
     resolver: zodResolver(resultSchema),
@@ -69,26 +87,45 @@ export default function ResultsPage() {
 
   const onSubmit = async (data: z.infer<typeof resultSchema>) => {
     if (!selectedRound) {
-      alert("กรุณาเลือกรอบหวย");
+      setDialogMessage("กรุณาเลือกรอบหวย");
+      setWarningDialogOpen(true);
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      await submitResult(selectedRound.id, {
+      const calcResult = await submitResult(selectedRound.id, {
         firstPrize: data.firstPrize || undefined,
         lastTwoDigits: data.lastTwoDigits || undefined,
         lastThreeDigits: data.lastThreeDigits || undefined,
       });
-      alert("กรอกผลรางวัลสำเร็จ");
+      
+      if (calcResult) {
+        setCalculationResult(calcResult);
+        setDialogMessage(
+          `กรอกผลรางวัลสำเร็จ\n\n` +
+          `ผลการคำนวณ:\n` +
+          `- จำนวนผู้ชนะ: ${calcResult.won} รายการ\n` +
+          `- จำนวนผู้แพ้: ${calcResult.lost} รายการ\n` +
+          `- ยอดจ่ายรางวัลรวม: ${calcResult.totalPayout.toLocaleString('th-TH')} บาท`
+        );
+      } else {
+        setDialogMessage("กรอกผลรางวัลสำเร็จ");
+      }
+      setSuccessDialogOpen(true);
       form.reset();
       setSelectedRound(null);
+      await refetch();
     } catch (error: any) {
       const message =
         error.response?.data?.message?.[0] ||
         error.response?.data?.message ||
         error.message ||
         "เกิดข้อผิดพลาด";
-      alert(message);
+      setDialogMessage(message);
+      setErrorDialogOpen(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -131,10 +168,16 @@ export default function ResultsPage() {
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm ${
             round.status === "open"
               ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+              : round.status === "completed"
+              ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
               : "bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700"
           }`}
         >
-          {round.status === "open" ? "เปิดรับแทง" : "ปิดรับแทง"}
+          {round.status === "open"
+            ? "เปิดรับแทง"
+            : round.status === "completed"
+            ? "เสร็จสิ้น"
+            : "ปิดรับแทง"}
         </span>
       ),
     },
@@ -241,8 +284,12 @@ export default function ResultsPage() {
                       label="เลขท้าย 3 ตัว"
                       placeholder="กรอกเลขท้าย 3 ตัว"
                     />
-                    <Button type="submit" className="w-full">
-                      บันทึกผลรางวัล
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "กำลังบันทึก..." : "บันทึกผลรางวัล"}
                     </Button>
                   </form>
                 </Form>
@@ -250,6 +297,105 @@ export default function ResultsPage() {
             </Card>
           )}
         </div>
+
+      {/* Success Dialog */}
+      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+              สำเร็จ
+            </DialogTitle>
+            <DialogDescription className="mt-2 whitespace-pre-line">
+              {dialogMessage}
+            </DialogDescription>
+            {calculationResult && (
+              <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <h4 className="font-semibold text-purple-900 mb-2">สรุปผลการคำนวณรางวัล</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">จำนวนผู้ชนะ:</span>
+                    <span className="font-semibold text-green-600">{calculationResult.won} รายการ</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">จำนวนผู้แพ้:</span>
+                    <span className="font-semibold text-red-600">{calculationResult.lost} รายการ</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-purple-200">
+                    <span className="text-gray-600 font-semibold">ยอดจ่ายรางวัลรวม:</span>
+                    <span className="font-bold text-purple-600 text-lg">
+                      {calculationResult.totalPayout.toLocaleString('th-TH')} บาท
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setSuccessDialogOpen(false);
+                setCalculationResult(null);
+              }}
+              className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+            >
+              ตกลง
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+                <X className="h-4 w-4 text-red-600" />
+              </div>
+              เกิดข้อผิดพลาด
+            </DialogTitle>
+            <DialogDescription className="mt-2">
+              {dialogMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setErrorDialogOpen(false)}
+              variant="destructive"
+            >
+              ตกลง
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Warning Dialog */}
+      <Dialog open={warningDialogOpen} onOpenChange={setWarningDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
+                <X className="h-4 w-4 text-yellow-600" />
+              </div>
+              คำเตือน
+            </DialogTitle>
+            <DialogDescription className="mt-2">
+              {dialogMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setWarningDialogOpen(false)}
+              className="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+            >
+              ตกลง
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

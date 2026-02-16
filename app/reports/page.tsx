@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
 import {
@@ -11,11 +12,15 @@ import {
   Calendar,
   ArrowDownCircle,
   ArrowUpCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useReports } from "@/hooks/use-reports";
 
+const formatMoney = (value: number) =>
+  `฿${Number(value).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 export default function ReportsPage() {
-  const { reportData, loading, refetch } = useReports();
+  const { reportData, loading, error, refetch } = useReports();
 
   useEffect(() => {
     refetch();
@@ -23,6 +28,32 @@ export default function ReportsPage() {
 
   if (loading) {
     return <Loading />;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">รายงานสรุป</h1>
+          <p className="text-slate-600">ภาพรวมการทำงานของระบบ</p>
+        </div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
+          <div className="flex items-center gap-2 font-semibold">
+            <AlertCircle className="h-5 w-5" />
+            ไม่สามารถโหลดรายงานได้
+          </div>
+          <p className="text-sm mt-2">{error.message}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 border-red-300 text-red-700 hover:bg-red-100"
+            onClick={() => refetch()}
+          >
+            ลองใหม่
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const stats = [
@@ -120,8 +151,8 @@ export default function ReportsPage() {
                   }`}
                 >
                   {isMoney
-                    ? `฿${stat.value.toLocaleString()}`
-                    : stat.value.toLocaleString()}
+                    ? formatMoney(stat.value)
+                    : stat.value.toLocaleString("th-TH")}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">{stat.description}</p>
               </CardContent>

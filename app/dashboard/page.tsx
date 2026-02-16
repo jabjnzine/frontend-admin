@@ -22,17 +22,55 @@ import {
   TrendingUp,
   Activity,
   LayoutDashboard,
+  Target,
 } from "lucide-react";
 import { useDashboard } from "@/hooks/use-dashboard";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { stats, loading, refetch } = useDashboard();
+  const { stats, loading, error, refetch } = useDashboard();
 
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 md:space-y-8 w-full max-w-none animate-fade-in">
+        <div className="h-40 md:h-48 rounded-2xl bg-slate-100 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-xl bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div key={i} className="h-44 rounded-xl bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 w-full max-w-none">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 md:p-6 text-red-800">
+          <p className="font-semibold">ไม่สามารถโหลดข้อมูลแดชบอร์ดได้</p>
+          <p className="text-sm mt-1">{error.message}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 border-red-300 text-red-700 hover:bg-red-100"
+            onClick={() => refetch()}
+          >
+            ลองใหม่
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const quickActions = [
     {
@@ -64,6 +102,13 @@ export default function DashboardPage() {
       href: "/results",
       icon: Award,
       color: "from-orange-500 to-red-500",
+    },
+    {
+      title: "จัดการการแทง",
+      description: "ดูการแทงทั้งหมดในระบบ",
+      href: "/bets",
+      icon: Target,
+      color: "from-pink-500 to-rose-500",
     },
     {
       title: "จัดการการเงิน",
