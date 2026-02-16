@@ -77,18 +77,7 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
-  
-  html {
-    overflow-x: hidden;
-    width: 100%;
-  }
-  
-  #__next,
-  body > div {
-    width: 100%;
-    max-width: 100%;
-  }
-  
+
   /* Glass effect utility */
   .glass-effect {
     background: rgba(255, 255, 255, 0.95);

@@ -100,17 +100,22 @@ export default function UsersPage() {
       headerClassName: "text-right",
       className: "text-right",
       render: (user) => (
-        <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="flex items-center justify-end pointer-events-auto relative z-10" 
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded transition-colors pointer-events-auto"
                 title="การดำเนินการ"
+                type="button"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuContent align="end">
               {user.status === "active" ? (
                 <DropdownMenuItem
                   className="text-red-600 focus:text-red-600 focus:bg-red-50"
